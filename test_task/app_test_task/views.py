@@ -6,7 +6,7 @@ import jwt
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
-from .serializers import UserSerializer
+from .serializers import UserSerializer, MessageSerializer
 from .models import User, Message
 
 
@@ -94,7 +94,10 @@ class MessageView(APIView):
                 for i_message in Message.objects.filter(user=user).all()[:count]:
                     response.data[i_message.id] = i_message.message_text
         except ValueError:
-            Message.objects.create(user=user, message_text=message)
+            serializer = MessageSerializer(data={'user': User.objects.filter(name=name).first().id,
+                                                 'message_text': message})
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             response.data = {'message': 'Сообщение успешно загружено'}
 
         return response
